@@ -17,6 +17,7 @@ import Person from '@mui/icons-material/Person';
 import Apps from '@mui/icons-material/Apps';
 import FactCheck from '@mui/icons-material/FactCheck';
 import BookmarkAdd from '@mui/icons-material/BookmarkAdd';
+import { NavLink } from 'react-router-dom';
 
 const useRovingIndex = (options) => {
     const {
@@ -132,9 +133,11 @@ const AboutMenu = React.forwardRef(({ focusNext, focusPrevious, ...props }, ref)
                     }}
                     sx={[open && ((theme) => theme.variants.plainHover.neutral)]}
                 >
-                    About <KeyboardArrowDown />
+                    <NavLink to="/analytics" style={{ textDecoration: 'none', color: 'inherit' }} >
+                        Analytics <KeyboardArrowDown />
+                    </NavLink>
                 </ListItemButton>
-                <Popper id={id} open={open} anchorEl={anchorEl} disablePortal keepMounted>
+                {/* <Popper id={id} open={open} anchorEl={anchorEl} disablePortal keepMounted>
                     <List
                         role="menu"
                         aria-label="About"
@@ -174,7 +177,7 @@ const AboutMenu = React.forwardRef(({ focusNext, focusPrevious, ...props }, ref)
                             </ListItemButton>
                         </ListItem>
                     </List>
-                </Popper>
+                </Popper> */}
             </div>
         </ClickAwayListener>
     );
@@ -307,7 +310,7 @@ export default function ExampleNavigationMenu() {
                         role="menuitem"
                         {...getTargetProps(0)}
                         component="a"
-                        href="#navigation-menu"
+                        href="/"
                     >
                         <ListItemDecorator>
                             <HomeRounded />

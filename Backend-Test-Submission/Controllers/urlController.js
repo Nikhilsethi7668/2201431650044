@@ -11,7 +11,8 @@ const shortenUrl = async (req, res) => {
     return res.status(400).json({ message: "Original URL is required" });
 
   const code = shortcode || Math.random().toString(36).substr(2, 6);
-  const expiryDate = validity ? new Date(Date.now() + validity * 60000) : null;
+  const minutes = validity || 30;
+  const expiryDate = new Date(Date.now() + minutes * 60000);
 
   try {
     const newUrl = await Url.create({
@@ -43,44 +44,76 @@ const redirectToUrl = async (req, res) => {
   try {
     const urlData = await Url.findOne({ shortcode });
 
-    if (!urlData)
+    if (!urlData) {
       return res.status(404).json({ message: "Short URL not found" });
+    }
 
     if (urlData.expiry && new Date() > new Date(urlData.expiry)) {
       return res.status(410).json({ message: "URL expired" });
     }
 
+    await Click.create({
+      shortcode,
+      timestamp: new Date(),
+    });
+
     logEvent({
       component: "redirectToUrl",
-      message: `Redirecting to ${urlData.originalUrl}`,
+      message: `Redirected to ${urlData.originalUrl} (click recorded)`,
       level: "INFO",
     });
 
     res.redirect(urlData.originalUrl);
   } catch (err) {
+    logEvent({
+      component: "redirectToUrl",
+      message: `Redirection error: ${err.message}`,
+      level: "ERROR",
+    });
     res.status(500).json({ message: "Redirection failed" });
   }
 };
 
-const getStats = async (req, res) => {
-  const { shortcode } = req.params;
-
+const getAll = async (req, res) => {
   try {
-    const clicks = await Click.find({ shortcode }).sort({ timestamp: -1 });
-    const urlData = await Url.findOne({ shortcode });
+    const allUrls = await Url.find({});
+    const urlsWithClicks = [];
 
-    if (!urlData)
-      return res.status(404).json({ message: "Short URL not found" });
+    for (const url of allUrls) {
+      try {
+        const clicks = await Click.find({ shortcode: url.shortcode }).sort({
+          timestamp: -1,
+        });
+        urlsWithClicks.push({
+          ...url.toObject(),
+          clicks,
+          totalClicks: clicks.length,
+        });
+      } catch (innerError) {
+        console.error(
+          `Error fetching clicks for shortcode ${url.shortcode}:`,
+          innerError
+        );
+        urlsWithClicks.push({
+          ...url.toObject(),
+          clicks: [],
+          totalClicks: 0,
+        });
+      }
+    }
 
-    res.json({
-      originalUrl: urlData.originalUrl,
-      createdAt: urlData.createdAt,
-      expiry: urlData.expiry,
-      totalClicks: clicks.length,
-      clicks,
+    res.status(200).json({
+      success: true,
+      count: urlsWithClicks.length,
+      data: urlsWithClicks,
     });
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching stats" });
+  } catch (error) {
+    console.error("Error fetching URLs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching URLs",
+    });
   }
 };
-module.exports = { shortenUrl, redirectToUrl, getStats };
+
+module.exports = { shortenUrl, redirectToUrl, getAll };

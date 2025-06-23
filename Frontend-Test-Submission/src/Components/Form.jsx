@@ -162,14 +162,10 @@ export default function ShortenerForm() {
                 </Button>
             </Box>
 
-            {results.length > 0 && (
-                <Box>
-                    <Divider />
-                    <Typography variant="h5" mt={3} mb={2}>
-                        Results
-                    </Typography>
-                    {results.map((res, i) =>
-                        res.shortLink ? (
+            <Box display="flex" flexDirection="column" gap={2}>
+                {results.map((res, i) =>
+                    res.shortLink ? (
+                        <Box key={i}>
                             <Typography
                                 component="button"
                                 onClick={() => handleRedirect(res.shortLink)}
@@ -180,20 +176,34 @@ export default function ShortenerForm() {
                                     color: 'blue',
                                     cursor: 'pointer',
                                     textDecoration: 'underline',
-                                    fontSize: 'inherit',
+                                    fontSize: '1rem',
+                                    textAlign: 'left',
                                 }}
                             >
-                                {res.shortLink}
+                                🔗 {res.shortLink}
+                            </Typography>
 
+                            <Typography variant="body2" color="textSecondary" ml={2}>
+                                📅 Expires At:{" "}
+                                {new Date(res.expiry).toLocaleString("en-IN", {
+                                    timeZone: "Asia/Kolkata",
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    second: "2-digit",
+                                })}
                             </Typography>
-                        ) : (
-                            <Typography key={i} color="error">
-                                ❌ {res.error}
-                            </Typography>
-                        )
-                    )}
-                </Box>
-            )}
+                        </Box>
+                    ) : (
+                        <Typography key={i} color="error">
+                            ❌ {res.error}
+                        </Typography>
+                    )
+                )}
+            </Box>
+
         </Box>
     );
 }

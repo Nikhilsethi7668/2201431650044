@@ -6,10 +6,13 @@ const urlRoutes = require("./Routes/urlRoutes");
 const { logEvent } = require("../Logging_Middleware/logger");
 
 dotenv.config();
+
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use((req, res, next) => {
   logEvent({
     component: "ExpressMiddleware",
@@ -17,6 +20,18 @@ app.use((req, res, next) => {
     level: "INFO",
   });
   next();
+});
+
+app.use("/api", urlRoutes);
+
+app.use((err, req, res, next) => {
+  logEvent({
+    component: "ExpressErrorHandler",
+    message: err.message,
+    level: "ERROR",
+    stack: err.stack,
+  });
+  res.status(500).json({ error: err.message });
 });
 
 const startServer = async () => {
@@ -32,13 +47,15 @@ const startServer = async () => {
       level: "SUCCESS",
     });
 
-    app.listen(process.env.PORT || 8000, () =>
+    const PORT = process.env.PORT || 8000;
+    app.listen(PORT, () => {
       logEvent({
         component: "ExpressApp",
-        message: "Server started on port 8000",
+        message: `Server started on port ${PORT}`,
         level: "INFO",
-      })
-    );
+      });
+      console.log(`Server running on port ${PORT}`);
+    });
   } catch (err) {
     logEvent({
       component: "MongoDB",
@@ -50,4 +67,3 @@ const startServer = async () => {
 };
 
 startServer();
-app.use("/api", urlRoutes);
